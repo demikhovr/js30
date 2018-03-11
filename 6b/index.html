@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Type Ahead 👀</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <form class="search-form">
+    <input type="text" class="search" placeholder="City or Country">
+    <ul class="suggestions">
+      <li>Filter for a city</li>
+      <li>or a country</li>
+    </ul>
+  </form>
+<script>
+const endpoint = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
+const matchesAmount = 25;
+
+let cities = [];
+
+fetch(endpoint)
+  .then(blob => blob.json())
+  .then(data => cities = data);
+
+  console.log(cities)
+
+function debounce(callback, time) {
+  let interval;
+  return (...args) => {
+    clearTimeout(interval);
+    interval = setTimeout(() => {
+      interval = null;
+      callback(...args);
+    }, time);
+  };
+};
+
+function findMatches(wordToMatch, cities) {
+  return cities.filter(place => {
+    const regex = new RegExp(wordToMatch, 'gi');
+    return place.name.match(regex) || place.country.match(regex);
+  });
+}
+
+function displayMatches() {
+  const matchArray = findMatches(searchInput.value, cities);
+  const html = matchArray.slice(0, matchesAmount).map(place => {
+    const regex = new RegExp(searchInput.value, 'gi');
+    const cityName = place.name.replace(regex, `<span class="hl">${searchInput.value}</span>`)
+    const countryName = place.country.replace(regex, `<span class="hl">${searchInput.value}</span>`)
+    return `
+    <li>
+      <span class="name">${cityName}, ${countryName}</span>
+      <span class="population">lat: ${(+place.lat).toFixed(3)}, lng: ${(+place.lng).toFixed(3)}</span>
+    `;
+  }).join('');
+  suggestions.innerHTML = html;
+}
+
+const searchInput = document.querySelector('.search');
+const suggestions = document.querySelector('.suggestions');
+const debounceTimeout = 250; //ms
+
+searchInput.addEventListener('change', debounce(() => {
+  displayMatches();
+}, debounceTimeout));
+searchInput.addEventListener('keyup', debounce(() => {
+  displayMatches();
+}, debounceTimeout));
+
+</script>
+  </body>
+</html>
